@@ -37,7 +37,7 @@ void sortRequests() {
     for(Request& r: requests) {
         for(std::pair<Server*, int> p : r.endpoint->server_latency) {
             CacheVideo cv;
-            cv.score = r.endpoint->data_latency - p.second;
+            cv.score = r.nb*(r.endpoint->data_latency - p.second);
             cv.cache_serv = p.first;
             sorted_caches_per_requests[r.id].push(cv);
 
@@ -74,18 +74,20 @@ void affectVideos() {
         if(!requestUsed[sr.r->id]) {
             // std::cout << "Treating untreated request : " << sr.r->id << std::endl;
             SortedCachesQueue& scq = sorted_caches_per_requests[sr.r->id];
-            while(!scq.empty()) {
-                CacheVideo cv = scq.top();
-                // std::cout << "  Try to put video in cache : " << cv.cache_serv->id << std::endl;
-                // std::cout << "    Available : " << cv.cache_serv->id << std::endl;
-                if(cache_affects[cv.cache_serv->id].available >= sr.r->video->size) {
-                    cache_affects[cv.cache_serv->id].available -= sr.r->video->size;
-                    cache_affects[cv.cache_serv->id].videos.insert(sr.r->video);
-                    break;
-                }
-                scq.pop();
+            if(scq.empty()) {
+                requestUsed[sr.r->id] = true;
+                continue;
             }
-            requestUsed[sr.r->id] = true;
+
+            CacheVideo cv = scq.top();
+            scq.pop();
+            // std::cout << "  Try to put video in cache : " << cv.cache_serv->id << std::endl;
+            // std::cout << "    Available : " << cv.cache_serv->available << std::endl;
+            if(cache_affects[cv.cache_serv->id].available >= sr.r->video->size) {
+                cache_affects[cv.cache_serv->id].available -= sr.r->video->size;
+                cache_affects[cv.cache_serv->id].videos.insert(sr.r->video);
+                requestUsed[sr.r->id] = true;
+            }
         }
         sorted_requests.pop();
     }
