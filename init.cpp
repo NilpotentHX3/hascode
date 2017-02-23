@@ -33,7 +33,7 @@ void init() {
 
 	servers.resize(C);
 	for (int c = 0 ; c < C ; ++c) {
-		servers[C].id = c;
+		servers[c].id = c;
 	}
 
 	videos.resize(V);
@@ -67,4 +67,5 @@ void init() {
 	}
 
     std::cout << "Initialized ! " << std::endl;
+    std::cout << "R = " << requests.size() << std::endl;
 }

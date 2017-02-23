@@ -1,5 +1,6 @@
 #include <queue>
 #include <fstream>
+#include <set>
 
 struct CacheVideo {
     int score;
@@ -51,7 +52,7 @@ void sortRequests() {
 struct CacheAffectations {
     int cache;
     int available;
-    std::vector<Video*> videos;
+    std::set<Video*> videos;
 };
 std::vector<CacheAffectations> cache_affects;
 
@@ -63,15 +64,23 @@ void affectVideos() {
     }
 
     cache_affects.resize(servers.size());
+    for(unsigned int i = 0; i < servers.size(); i++) {
+        cache_affects[i].cache = i;
+        cache_affects[i].available = X;
+    }
+
     while(!sorted_requests.empty()) {
         SortedRequests sr = sorted_requests.top();
         if(!requestUsed[sr.r->id]) {
+            // std::cout << "Treating untreated request : " << sr.r->id << std::endl;
             SortedCachesQueue& scq = sorted_caches_per_requests[sr.r->id];
             while(!scq.empty()) {
                 CacheVideo cv = scq.top();
+                // std::cout << "  Try to put video in cache : " << cv.cache_serv->id << std::endl;
+                // std::cout << "    Available : " << cv.cache_serv->id << std::endl;
                 if(cache_affects[cv.cache_serv->id].available >= sr.r->video->size) {
                     cache_affects[cv.cache_serv->id].available -= sr.r->video->size;
-                    cache_affects[cv.cache_serv->id].videos.push_back(sr.r->video);
+                    cache_affects[cv.cache_serv->id].videos.insert(sr.r->video);
                     break;
                 }
                 scq.pop();
